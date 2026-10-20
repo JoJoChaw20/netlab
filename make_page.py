@@ -124,7 +124,6 @@ PAGE = """<!doctype html>
 </head>
 <body>
 <h1>My network, built from data</h1>
-<p class="meta">Student ID ending {last4} · generated from <code>{source}</code> by <code>make_page.py</code> on {today}</p>
 <p id="summary">{n_switches} switches, {n_hosts} hosts and {n_links} links, on IPv4 <code>{v4_block}</code> and IPv6 <code>{v6_block}</code>.
 The same file builds this network in Mininet and generates this page.</p>
 <p>Repository: <a id="repository" href="{repo}">{repo}</a></p>
