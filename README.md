@@ -45,10 +45,18 @@ in Docker; opening the published page does not start a network.**
 
 ## Reproduce locally
 
-Host commands below are **PowerShell**. Start by inspecting what already exists:
+Host commands below are **PowerShell**. For a new checkout, open a terminal
+in the folder where you want to download the project:
 
 ```powershell
-Set-Location C:\WIC2005_Lab\netlab
+git clone https://github.com/JoJoChaw20/netlab.git
+cd netlab
+```
+
+If you already have a checkout, open a terminal in that `netlab` folder instead.
+Inspect the repository and Docker state before continuing:
+
+```powershell
 git status --short
 git log --oneline
 git remote -v
@@ -56,8 +64,9 @@ docker ps -a
 docker image ls netlab
 ```
 
-The inspected setup has a running privileged container named `netlab`, using
-`netlab:1.0` and this folder mounted at `/lab`. Reuse it:
+For a fresh setup, follow the Docker build and run commands below. If you
+already have a running privileged container named `netlab`, using `netlab:1.0`
+and this checkout mounted at `/lab`, reuse it:
 
 ```powershell
 docker exec -it -w /lab netlab bash
@@ -131,7 +140,7 @@ python3 -c "import yaml,json; print(json.dumps(yaml.safe_load(open('topology.yam
 python3 -c "from build_topo import load; assert load('topology.yaml') == load('/tmp/netlab-5019.json'); print('Equivalent data; YAML comments are not preserved')"
 ```
 
-## Evence and what it demonstrates
+## Evidence and what it demonstrates
 
 The committed evidence is already collected. Preserve it; there is no need to
 repeat the duplicate experiment. `dad.txt` shows `fd00:5019::1` on h2 marked
