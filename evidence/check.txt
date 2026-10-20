@@ -1,14 +1,4 @@
-*** Error setting resource limits. Mininet's performance may be affected.
-Warning: Linux bridge may not work with net.bridge.bridge-nf-call-arptables = 1 
-Warning: Linux bridge may not work with net.bridge.bridge-nf-call-iptables = 1 
-Warning: Linux bridge may not work with net.bridge.bridge-nf-call-ip6tables = 1 
-Traceback (most recent call last):
-  File "/lab/build_topo.py", line 96, in <module>
-    net = build(spec)
-  File "/lab/build_topo.py", line 72, in build
-    net.addLink(a, b)
-  File "/usr/lib/python3/dist-packages/mininet/net.py", line 393, in addLink
-    node2 = node2 if not isinstance( node2, BaseString ) else self[ node2 ]
-  File "/usr/lib/python3/dist-packages/mininet/net.py", line 343, in __getitem__
-    return self.nameToNode[ key ]
-KeyError: 's9'
+PROBLEM: h2 and h1 both use 10.19.0.1
+PROBLEM: h2 and h1 both use fd00:5019::1
+PROBLEM: Link ['h6', 's9'] refers to unknown node s9
+Fix the description and try again.

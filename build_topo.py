@@ -52,12 +52,42 @@ def check_mine(spec):
 
 
 def check(spec):
-    """Return a list of problems in the description (an empty list means it looks fine).
-
-    Week 2 task: report any IP address that is used by more than one host.
-    """
+    """Reject duplicate IPv4/IPv6 addresses and unknown link endpoints."""
     problems = []
-    # TODO: your code here
+    seen_addresses = {}
+
+    for host in spec["hosts"]:
+        for field in ("ip", "ipv6"):
+            if field not in host:
+                problems.append(f"{host['name']}: missing {field} address")
+                continue
+
+            try:
+                address = ipaddress.ip_interface(host[field]).ip
+            except ValueError:
+                # check_mine() already reports invalid addresses.
+                continue
+
+            if address in seen_addresses:
+                previous = seen_addresses[address]
+                problems.append(
+                    f"{host['name']} and {previous} both use {address}"
+                )
+            else:
+                seen_addresses[address] = host["name"]
+
+    nodes = set(spec["switches"])
+    nodes.update(host["name"] for host in spec["hosts"])
+
+    for link in spec["links"]:
+        if not isinstance(link, list) or len(link) != 2:
+            problems.append(f"Invalid link: {link}; expected two node names")
+            continue
+
+        for node in link:
+            if node not in nodes:
+                problems.append(f"Link {link} refers to unknown node {node}")
+
     return problems
 
 
