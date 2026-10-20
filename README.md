@@ -1,10 +1,9 @@
-# WIC2005 Weeks 1–2: network 5019
+# WIC2005 Weeks 1–2
 
 This lab builds a dual-stack Mininet network inside a custom Docker image,
 `netlab:1.0`. Three Linux bridges form the chain `s1 — s2 — s3`:
 `h1/h2` attach to `s1`, `h3/h4` to `s2`, and `h5/h6` to `s3`.
-Hosts use `10.19.0.1–6/24` and `fd00:5019::1–6/64`. Only the student ID
-suffix 5019 is used in project content.
+Hosts use `10.19.0.1–6/24` and `fd00:5019::1–6/64`.
 
 The chain is connected and has no forwarding loop. It makes local and remote
 MAC learning easy to compare without adding routing or an SDN controller.
@@ -43,9 +42,6 @@ in Docker; opening the published page does not start a network.**
   Mininet needs Linux network namespaces, virtual interfaces and bridges.
 - Internet for the initial image build, GitHub publishing and the Mermaid CDN
   used by the generated page. No host Python installation is required.
-- A GitHub account and access to the intended repository; a public repository
-  works with GitHub Free Pages. Keep real names and full student IDs out of
-  public files and use an appropriate pseudonymous Git commit identity.
 
 ## Reproduce locally
 
@@ -135,7 +131,7 @@ python3 -c "import yaml,json; print(json.dumps(yaml.safe_load(open('topology.yam
 python3 -c "from build_topo import load; assert load('topology.yaml') == load('/tmp/netlab-5019.json'); print('Equivalent data; YAML comments are not preserved')"
 ```
 
-## Evidence and what it demonstrates
+## Evence and what it demonstrates
 
 The committed evidence is already collected. Preserve it; there is no need to
 repeat the duplicate experiment. `dad.txt` shows `fd00:5019::1` on h2 marked
