@@ -1,0 +1,89 @@
+# page.yaml: the words on your page, kept as data like everything else.
+# make_page.py puts each answer under its question. A few sentences each, in your own words;
+# leave a blank line between paragraphs. Refer to YOUR network and YOUR evidence.
+# Never put your name or full student ID here: the page is public.
+
+repository: https://github.com/JoJoChaw20/netlab
+
+answers:
+  planes:
+    question: "Where are the data, control and management planes in your network?"
+    answer: >-
+      The data plane consists of the Linux bridges s1, s2 and s3,
+      which forward Ethernet frames between my six hosts. There is
+      no separate SDN controller or routing protocol in this network;
+      the bridges learn MAC addresses automatically. The management
+      plane includes the Mininet CLI and my Python scripts, which
+      create, configure and inspect the network.
+
+  learning:
+    question: "How did your switches learn which port leads to each host? Use your MAC table evidence."
+    answer: >-
+      Each switch learns the source MAC address of an incoming frame
+      and associates it with the port where the frame arrived.
+      After generating traffic, I saved s1's MAC table in macs.txt.
+      The non-local entries show the host MAC addresses it learned.
+      In my topology, h1 and h2 connect directly to s1, while traffic
+      from h3 through h6 reaches s1 through its link to s2.
+      When a destination MAC is unknown, the bridge floods the frame
+      through its other ports; once learned, it forwards known unicast
+      traffic through the appropriate port.
+
+  kind:
+    question: "Which of the four kinds of programmability is this assignment (a network described as data, then built and documented by scripts)? Why isn't it any of the other three?"
+    answer: >-
+      This assignment demonstrates automated configuration management.
+      I describe the desired network in topology.yaml, and Python
+      scripts validate the data, create the network and generate its
+      documentation. I am not changing how switches process packet
+      headers, using an external controller to decide forwarding,
+      or configuring devices through interfaces such as NETCONF.
+      Instead, I automate the creation of a network from a shared
+      source of truth.
+
+  two_am:
+    question: "Week 1's 2 a.m. change on 40 switches: what would be different if those switches were described like your network?"
+    answer: >-
+      A shared data model would let an engineer define a change once,
+      validate it and use automation to apply it consistently across
+      the switches. Git would record what changed and why, and the
+      documentation could be regenerated from the same data.
+      This would reduce repetitive commands and manual mistakes.
+      However, an incorrect model or script could affect all 40
+      switches, so review, testing and verification would still be
+      necessary. Automation alone would not guarantee rollback.
+
+  model:
+    question: "What's the difference between your network's data model and its serialisation? Use YAML and JSON as the example."
+    answer: >-
+      My data model describes three switches, six hosts, their IPv4
+      and IPv6 addresses, and eight links. YAML is the format used
+      to store that structure in topology.yaml. The same structure
+      can also be represented in JSON using objects and arrays.
+      Changing the serialisation does not change the network when
+      the data remains equivalent. YAML comments, such as my host
+      role descriptions, are lost when converting the parsed data
+      to JSON.
+
+  check:
+    question: "Why is it better to catch bad data in check() than with pingall? What did IPv6 notice about a duplicate address that IPv4 didn't?"
+    answer: >-
+      check() identifies mistakes before any network devices are
+      created. My bad.yaml test produced errors for duplicate IPv4
+      and IPv6 addresses and a link to the nonexistent switch s9.
+      pingall tests connectivity only after building the network
+      and may not clearly reveal the cause of an addressing problem.
+      In my running experiment, h2 marked the duplicate IPv6 address
+      fd00:5019::1 as dadfailed tentative. IPv4 accepted the duplicate
+      10.19.0.1 as a secondary address without flagging the conflict.
+
+  git:
+    question: "What does your Git history give you that copying files into folders named topology-v2-final wouldn't?"
+    answer: >-
+      Git records specific changes to my files with commit messages
+      explaining each stage of the work. My history separates the
+      Docker environment, topology design, validation checks,
+      collected evidence and webpage generation. I can compare
+      versions with git diff and recover an earlier committed
+      version when needed. This provides a clearer record than
+      keeping several folders with similar names.
