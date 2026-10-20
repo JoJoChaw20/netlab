@@ -248,9 +248,11 @@ main → /docs → Save**. See [GitHub's publishing-source instructions](https:/
 Wait for the Pages deployment to finish, then open the URL GitHub displays.
 Verify the repository link, addresses, diagram, evidence and answers there;
 an HTTP success alone does not establish that the latest page is deployed.
-The expected site is `https://JoJoChaw20.github.io/netlab/`.
+The published site is [Network 5019](https://jojochaw20.github.io/netlab/).
 Submit the verified **Pages URL**, rather than the repository URL, on Spectrum
-yourself. Publication and verification remain pending until confirmed.
+yourself. On 20 October 2026, Pages was configured from `main` / `docs`, the
+site returned HTTP 200, and its HTML matched the committed generated page
+(allowing for Windows/Linux line endings). Check again after future changes.
 
 ## Cleanup
 
