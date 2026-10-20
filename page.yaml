@@ -22,7 +22,9 @@ answers:
       Each switch learns the source MAC address of an incoming frame
       and associates it with the port where the frame arrived.
       After generating traffic, I saved s1's MAC table in macs.txt.
-      The non-local entries show the host MAC addresses it learned.
+      The non-local entries show 00:00:00:00:00:01 on port 1,
+      00:00:00:00:00:02 on port 2, and host MACs ending 03 to 06
+      on port 3, matching the path through s2.
       In my topology, h1 and h2 connect directly to s1, while traffic
       from h3 through h6 reaches s1 through its link to s2.
       When a destination MAC is unknown, the bridge floods the frame
