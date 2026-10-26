@@ -9,7 +9,7 @@ so a network with a loop or a missing route never gets published, then writes
 docs/week3/index.html with your network, your evidence (evidence3/) and your answers
 (page3.yaml). GitHub Pages publishes it at https://<you>.github.io/<repository>/week3/
 
-One part is yours to write: routing_tables_section(). Look for TODO.
+Routing tables are derived from the same interface plan and static routes.
 """
 import datetime
 import html
@@ -23,10 +23,12 @@ import yaml
 from build_routed import check_paths, check_spec, hosts, load, plan
 
 EVIDENCE = [
+    ("pingall", "evidence3/pingall.txt", "All four end hosts: 12/12 directed ping tests passed"),
     ("routes", "evidence3/routes.txt", "Every router's routing table: ip route"),
     ("traces", "evidence3/traces.txt", "From one host to every other: traceroute"),
     ("summary", "evidence3/summary.txt", "Your summary route at work: ip route get"),
     ("failure", "evidence3/failure.txt", "A link goes down: what static routes do"),
+    ("recovery", "evidence3/recovery.txt", "After link-up and manual route restoration: 3/3 replies"),
     ("check", "evidence3/check.txt", "check_paths() stopping a loop and a missing route"),
 ]
 
@@ -52,7 +54,7 @@ def links_section(spec):
 
 
 def routing_tables_section(spec):
-    """TODO (assignment): return HTML showing each router's routing table, as the router sees it.
+    """Return HTML showing each router's routing table, as the router sees it.
 
     For each router in spec["routers"], list:
       - its directly connected networks: plan(spec)[router] gives its interfaces;
@@ -65,7 +67,25 @@ def routing_tables_section(spec):
         <tr><td>10.7.12.0/30</td><td>directly connected</td></tr> ...</table>
     Use esc() on every value.
     """
-    return "<p>TODO: show each router's routing table.</p>"
+    interfaces = plan(spec)
+    tables = []
+    for router in spec["routers"]:
+        entries = [(interface.network, "directly connected") for interface in interfaces[router]]
+        entries.extend(
+            (ipaddress.ip_network(route["to"]), route["via"])
+            for route in (spec.get("routes") or {}).get(router) or []
+        )
+        entries.sort(key=lambda entry: (-entry[0].prefixlen, int(entry[0].network_address)))
+        rows = "".join(
+            f"<tr><td><code>{esc(destination)}</code></td><td>{esc(next_hop)}</td></tr>"
+            for destination, next_hop in entries
+        )
+        tables.append(
+            f"<h3>{esc(router)}</h3><table>"
+            "<thead><tr><th>Destination</th><th>Next hop</th></tr></thead>"
+            f"<tbody>{rows}</tbody></table>"
+        )
+    return "\n".join(tables)
 
 
 def mermaid_diagram(spec):
@@ -114,11 +134,12 @@ PAGE = """<!doctype html>
 </style>
 </head>
 <body>
-<p class="meta"><a href="../">← Week 2: my network, built from data</a></p>
+<nav class="meta" aria-label="Lab weeks"><a href="../">Week 2: built from data</a> · <a href="./" aria-current="page">Week 3: routed network</a></nav>
 <h1>My routed network, from data</h1>
 <p class="meta">Student ID ending {last4} · generated from <code>{source}</code> by <code>make_page3.py</code> on {today}</p>
 <p id="summary">{n_routers} routers, {n_lans} LANs and {n_links} router links, with {n_routes} static routes, on <code>{v4_block}</code>.
-Every route was checked for loops and missing routes before it reached a router.</p>
+The static model passed longest-prefix-match path checks for every directed host pair before building.
+These checks do not test every possible runtime failure.</p>
 <p>Repository: <a id="repository" href="{repo}">{repo}</a></p>
 
 <h2>The network</h2>
@@ -130,9 +151,19 @@ Every route was checked for loops and missing routes before it reached a router.
 <pre class="mermaid" id="diagram">{diagram}</pre>
 
 <h2>Routing tables</h2>
+<p>Connected networks and static routes generated from <code>network.yaml</code>, longest prefix first.
+These describe the intended configuration; the saved <code>ip route</code> output below records runtime state.</p>
 <section id="routing-tables">{tables}</section>
 
-<h2>Evidence from the running network</h2>
+<h2>Runtime evidence and model validation</h2>
+<p>The saved route output lists r1, r2, r3 and r4 in order (5, 5, 6 and 6 entries).
+Traceroutes from h1 show r1 → r2 → h2, r1 → r4 → r3 → h3, and r1 → r4 → h4.
+On the h3 trace, <code>10.19.23.2</code> is r3's reply address toward h1 through r2;
+it does not mean that the forward path went through r2.</p>
+<p>The failure transcript records <code>!N</code> at r1 and <code>Network is unreachable</code>.
+The recovery transcript records the successful ping after manual route restoration.
+The intervening route inspection and restoration commands are described in the failure answer;
+they are not included in those saved transcripts. The final evidence block checks the static model.</p>
 <section id="evidence">{evidence}</section>
 
 <h2>What I learned</h2>

@@ -2,18 +2,32 @@
 # A few sentences each, in your own words, about YOUR network and YOUR evidence.
 # Leave a blank line between paragraphs. Never put your name or full student ID here.
 
-repository: https://github.com/YOUR-USERNAME/YOUR-REPOSITORY
+repository: https://github.com/JoJoChaw20/netlab
 
 answers:
   design:
     question: "Describe your design: why these routers, LANs and links, and how you chose the addresses."
-    answer: ""
+    answer: |
+      I used four routers in the ring r1-r2-r3-r4-r1, with one LAN per router: admin on 10.19.10.0/24, students on 10.19.20.0/24, servers on 10.19.40.0/24 and monitoring on 10.19.41.0/24. Suffix 5019 gives the allocation block 10.19.0.0/16. Each LAN router uses .1 and its host uses .10. The four router links use distinct /30 networks: 10.19.12.0/30, 10.19.23.0/30, 10.19.34.0/30 and 10.19.14.0/30, with .1 on the first named endpoint and .2 on the second. This avoids overlaps and gives each point-to-point link two usable addresses.
+
+      The ring provides an alternative physical path, while the ten static routes select the actual forwarding paths. All 12 directed end-host ping tests passed. From h1, h2 is reached through r1-r2, h3 through r1-r4-r3, and h4 through r1-r4. These paths agree with the saved traces. The server and monitoring LANs use adjacent, correctly aligned /24s so they can share a /23 summary.
   summary:
     question: "Which route summarises several LANs? Which networks does it cover, why is it correct, and what else would it attract if you added a network inside its range?"
-    answer: ""
+    answer: |
+      r1 has 10.19.40.0/23 via 10.19.14.2 (r4), and r2 has the same summary via 10.19.23.2 (r3). Its mask is 255.255.254.0 and its range is 10.19.40.0 through 10.19.41.255: exactly the server and monitoring /24 LANs, not the admin or student LANs. The even third octet 40 is the correct /23 boundary. r4 and r3 have connected or more-specific /24 routes that deliver packets to the appropriate LAN. The two saved r1 lookups, for 10.19.40.10 and 10.19.41.10, both select 10.19.14.2.
+
+      A summary matches every destination in its range, including unused addresses. These two /24s already fill the /23, so adding another distinct LAN inside it would require subdividing or redesigning the existing allocation; overlapping a third LAN would fail the model checks. Traffic to any newly assigned subnet within the range would still follow the summary unless a more-specific route wins. The downstream routers would need correct routes to that subnet, otherwise the summary could attract traffic that they cannot deliver.
   failure:
     question: "When you took a link down, what happened, and why couldn't your routes recover even though another path existed? What would have recovered?"
-    answer: ""
+    answer: |
+      Taking r1-r4 down broke the h1-to-h3 path. failure.txt shows !N at r1 (10.19.10.1), followed by "RTNETLINK answers: Network is unreachable" from the route lookup. Although the ring still offered r1-r2-r3, the static configuration had no mechanism to choose that alternative automatically. Physical redundancy alone does not provide static-route failover.
+
+      Bringing r1-r4 up did not restore connectivity. In the interactive route inspection, r1's 10.19.40.0/23 summary and r4's routes to 10.19.10.0/24 and 10.19.20.0/24 were missing after the link was brought back up. In this run, the link-down operation removed routes using that interface; link-up did not reinstall those static entries. I restored them with "r1 ip route replace 10.19.40.0/23 via 10.19.14.2", "r4 ip route replace 10.19.10.0/24 via 10.19.14.1" and "r4 ip route replace 10.19.20.0/24 via 10.19.14.1". recovery.txt then recorded 3/3 replies from h3. The intermediate inspection and commands were observed interactively, rather than saved in the two transcripts.
+
+      A correctly configured dynamic routing protocol such as OSPF could detect the failed adjacency, recalculate paths through the remaining ring links and install new routes after convergence. No such protocol was running here. check_paths() validates all 12 directed host paths in the intended static model using longest-prefix match; it does not monitor live interfaces, restore removed routes or guarantee recovery from runtime failures.
   control_plane:
     question: "In your network, what was the control plane? Who worked out the routes, and what does that mean for a network of 40 routers?"
-    answer: ""
+    answer: |
+      I provided the control decisions by choosing the topology, prefixes and next hops in network.yaml. The scripts turn that design into configuration: check_spec() checks the addresses and next hops, check_paths() follows the chosen routes for every directed host pair, and build_routed.py enables IPv4 forwarding and installs the static routes. The scripts validate and apply my decisions; they do not calculate replacement routes when a link fails. Linux supplies connected routes and forwards packets using longest-prefix match in each router's installed table. That per-packet forwarding is the data plane.
+
+      loop.yaml demonstrates r1-r4 forwarding loops for h1-to-h3 and h4-to-h3; missing.yaml demonstrates missing routes on r2 for h2-to-h1 and h3-to-h1. Both stop with "nothing was built" in check.txt. With 40 routers, manually selecting and updating consistent forward and return paths would be much harder, and a static validation pass would still not react to changing runtime state. A dynamic routing protocol could distribute reachability and recalculate routes, while configuration automation and model checks would still help keep the intended design consistent.

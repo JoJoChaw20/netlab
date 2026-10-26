@@ -123,6 +123,7 @@ PAGE = """<!doctype html>
 </style>
 </head>
 <body>
+<nav class="meta" aria-label="Lab weeks"><a href="./" aria-current="page">Week 2: built from data</a> · <a href="week3/">Week 3: routed network</a></nav>
 <h1>My network, built from data</h1>
 <p id="summary">{n_switches} switches, {n_hosts} hosts and {n_links} links, on IPv4 <code>{v4_block}</code> and IPv6 <code>{v6_block}</code>.
 The same file builds this network in Mininet and generates this page.</p>

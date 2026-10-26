@@ -1,4 +1,9 @@
-# WIC2005 Weeks 1–2
+# WIC2005 Weeks 1–3
+
+Published pages: [Week 2](https://jojochaw20.github.io/netlab/) ·
+[Week 3](https://jojochaw20.github.io/netlab/week3/).
+The Weeks 1–2 setup below is preserved; see [Week 3](#week-3-routed-network)
+for the routed network, validation and reproduction steps.
 
 This lab builds a dual-stack Mininet network inside a custom Docker image,
 `netlab:1.0`. Three Linux bridges form the chain `s1 — s2 — s3`:
@@ -283,6 +288,205 @@ docker image rm netlab:1.0
 These commands leave the bind-mounted project and evidence on the host. Do not
 use a global Docker prune or remove other containers to clean up this lab.
 
+## Week 3: routed network
+
+`network.yaml` describes the ring `r1-r2-r3-r4-r1`, using only suffix **5019**
+and its allocation block `10.19.0.0/16`. The four LANs are:
+
+| Role | Router / host | Network | Router / host address |
+| --- | --- | --- | --- |
+| Admin | r1 / h1 | 10.19.10.0/24 | 10.19.10.1 / 10.19.10.10 |
+| Students | r2 / h2 | 10.19.20.0/24 | 10.19.20.1 / 10.19.20.10 |
+| Servers | r3 / h3 | 10.19.40.0/24 | 10.19.40.1 / 10.19.40.10 |
+| Monitoring | r4 / h4 | 10.19.41.0/24 | 10.19.41.1 / 10.19.41.10 |
+
+Router links are r1-r2 `10.19.12.0/30`, r2-r3 `10.19.23.0/30`,
+r3-r4 `10.19.34.0/30`, and r1-r4 `10.19.14.0/30`.
+For each named pair, the first endpoint uses `.1` and the second `.2`.
+There are ten static routes; their complete next hops are in `network.yaml`.
+r1 summarises `10.19.40.0/23` via r4 (`10.19.14.2`), while r2 uses the
+same summary via r3 (`10.19.23.2`). This /23 covers exactly the server and
+monitoring /24s, from `10.19.40.0` through `10.19.41.255`, excluding both
+the admin and student LANs. The ring provides physical redundancy, but
+static routes do not automatically select an alternative path.
+
+| File | Purpose |
+| --- | --- |
+| `build_routed.py` | Validates the model, builds Linux routers and hosts, enables IPv4 forwarding and installs static routes. |
+| `loop.yaml`, `missing.yaml` | Deliberately invalid route models; stop before any network is built. |
+| `make_page3.py` | Generates LANs, links, diagram and routing tables from the model, plus saved evidence and answers. |
+| `page3.yaml` | Repository URL and four answers about this design and its observations. |
+| `evidence3/` | Original saved runtime output and negative-model validation output. |
+| `docs/week3/index.html` | Generated Week 3 page; Week 2 remains at `docs/index.html`. |
+
+### Reproduce Week 3 in Docker
+
+From **PowerShell**, check the container before using it:
+
+```powershell
+Set-Location C:\WIC2005_Labs\netlab
+docker ps -a --filter name=netlab-week3
+docker image ls netlab
+```
+
+If `netlab-week3` is running, reuse it:
+
+```powershell
+docker exec -it -w /lab netlab-week3 bash
+```
+
+The original container uses `--rm`, so it disappears when its main process
+exits. Only if it no longer exists, start a replacement with this checkout
+mounted at `/lab` (build the image first on a fresh setup):
+
+```powershell
+docker build -t netlab:1.0 .
+docker run --rm -it --name netlab-week3 --privileged --mount "type=bind,source=$($PWD.Path),target=/lab" -w /lab netlab:1.0 bash
+```
+
+`Dockerfile` includes `traceroute`. Inside **Bash**, first validate without
+creating interfaces or changing a running network:
+
+```bash
+cd /lab
+python3 -c "from build_routed import load,check_spec,check_paths; s=load('network.yaml'); p=check_spec(s) or check_paths(s); print(p); assert not p"
+python3 build_routed.py loop.yaml
+echo $?
+python3 build_routed.py missing.yaml
+echo $?
+```
+
+The valid model prints `[]`. Each invalid model exits with status 1 and
+`nothing was built`: the loop fixture catches h1-to-h3 and h4-to-h3 loops
+between r1 and r4; the missing-route fixture catches h2-to-h1 and h3-to-h1
+at r2. `check_paths()` follows longest-prefix-match routes for all 12
+directed host pairs. It validates the static model, not live interface
+state or every possible runtime failure.
+
+If no Mininet network is already active in this container, build it in Bash:
+
+```bash
+python3 build_routed.py network.yaml
+```
+
+At the **Mininet CLI**, test only the four end hosts (routers are also
+Mininet hosts internally, so an unqualified `pingall` includes them):
+
+```text
+py net.ping([net.get(h) for h in ('h1', 'h2', 'h3', 'h4')])
+h1 traceroute -n -I -m 8 -w 1 -q 1 h2
+h1 traceroute -n -I -m 8 -w 1 -q 1 h3
+h1 traceroute -n -I -m 8 -w 1 -q 1 h4
+r1 ip route get 10.19.40.10
+r1 ip route get 10.19.41.10
+```
+
+Use `exit` at the Mininet prompt when finished; it stops that network.
+Do not run a second build or `mn -c` alongside an active Mininet session.
+
+### Saved Week 3 evidence and failure recovery
+
+The original evidence was committed in `d1ebd9f` (validation) and `2d1b7db`
+(runtime observations). It is preserved without recreating the experiment.
+
+| Evidence | Recorded result |
+| --- | --- |
+| `check.txt` | Both invalid models stop with the expected loop/missing-route problems and `nothing was built`. |
+| `pingall.txt` | Four end hosts, 0% dropped, 12/12 directed tests received. |
+| `routes.txt` | r1, r2, r3, r4 tables concatenated in that order: 5, 5, 6, 6 entries. |
+| `traces.txt` | h1-to-h2 via r1-r2; h1-to-h3 via r1-r4-r3; h1-to-h4 via r1-r4. |
+| `summary.txt` | Both server and monitoring host lookups on r1 select `10.19.14.2`. |
+| `failure.txt` | After r1-r4 went down: `!N` at r1 and `Network is unreachable`. |
+| `recovery.txt` | After link-up **and manual route restoration**: h1-to-h3 ping succeeds, 3/3 replies. |
+
+All these files are under `evidence3/` and embedded in the Week 3 page.
+The empty, previously committed `routes.txtstraceroute` file is also preserved;
+it contains no measurements and is not included as page evidence.
+The h3 trace reports r3 as `10.19.23.2`: its ICMP reply heads back toward
+h1 through r2. This is compatible with the forward path through r4 to r3.
+
+In the completed failure experiment, `link r1 r4 up` alone did **not**
+restore connectivity. Interactive table inspection found r1's /23 summary
+and r4's routes to the admin and student LANs missing. The link-down operation
+had removed routes using the affected interfaces, and link-up did not recreate
+those static entries. The following commands restored them at the Mininet CLI:
+
+```text
+r1 ip route replace 10.19.40.0/23 via 10.19.14.2
+r4 ip route replace 10.19.10.0/24 via 10.19.14.1
+r4 ip route replace 10.19.20.0/24 via 10.19.14.1
+h1 ping -c 3 10.19.40.10
+```
+
+The intermediate table inspection and route commands were observed
+interactively; they are not present in the saved failure/recovery transcripts.
+Those transcripts record the failure and final successful ping. A correctly
+configured dynamic protocol such as OSPF could detect the failed adjacency and
+recalculate paths over the remaining ring links. Here the route design and
+scripts provide the control decisions, while Linux performs forwarding.
+
+### Collect evidence in a separate future run
+
+There is no need to repeat the failure experiment to generate the page.
+If collecting a fresh baseline later, preserve `evidence3/` and use a new
+directory. In **Bash**, before building the network:
+
+```bash
+export EVIDENCE_RUN="/lab/evidence3-run-$(date +%Y%m%d-%H%M%S)"
+mkdir "$EVIDENCE_RUN"
+python3 build_routed.py loop.yaml > "$EVIDENCE_RUN/check.txt" 2>&1
+python3 build_routed.py missing.yaml >> "$EVIDENCE_RUN/check.txt" 2>&1
+python3 build_routed.py network.yaml
+```
+
+At the **Mininet CLI**:
+
+```text
+py net.ping([net.get(h) for h in ('h1', 'h2', 'h3', 'h4')])
+r1 ip route > "$EVIDENCE_RUN/routes.txt"
+r2 ip route >> "$EVIDENCE_RUN/routes.txt"
+r3 ip route >> "$EVIDENCE_RUN/routes.txt"
+r4 ip route >> "$EVIDENCE_RUN/routes.txt"
+h1 traceroute -n -I -m 8 -w 1 -q 1 h2 > "$EVIDENCE_RUN/traces.txt"
+h1 traceroute -n -I -m 8 -w 1 -q 1 h3 >> "$EVIDENCE_RUN/traces.txt"
+h1 traceroute -n -I -m 8 -w 1 -q 1 h4 >> "$EVIDENCE_RUN/traces.txt"
+r1 ip route get 10.19.40.10 > "$EVIDENCE_RUN/summary.txt"
+r1 ip route get 10.19.41.10 >> "$EVIDENCE_RUN/summary.txt"
+exit
+```
+
+Copy the actual four-host ping output into that run's `pingall.txt`.
+Do not label copied historical failure/recovery output as a new observation.
+
+### Generate and publish both pages
+
+From **PowerShell**, while `netlab-week3` is running:
+
+```powershell
+docker exec -w /lab netlab-week3 python3 make_page.py topology.yaml
+docker exec -w /lab netlab-week3 python3 make_page3.py network.yaml
+git diff --check
+git diff -- docs/index.html
+Start-Process .\docs\week3\index.html
+```
+
+These generators read saved evidence and do not build a network or repeat
+runtime experiments. The Week 2 HTML changes only by adding navigation.
+Both generators include links between the two pages. Week 3 has four routing
+tables derived from `plan(spec)` and the static routes, sorted by decreasing
+prefix length with network address as the tie-breaker. Check all 22 rows,
+the eight diagram links, seven evidence blocks, four answers and repository
+link. No unanswered fields or template markers should remain.
+
+Before committing, verify that the local Git name/email and authenticated
+GitHub account are JoJoChaw20; use the account's verified no-reply address,
+configured with `git config --local`, never a guessed email. Check each new
+commit with `git log -1 --format=fuller`. Push normally to `origin main`;
+do not force-push or rewrite existing history. Pages uses **main /docs**.
+After deployment, verify both page URLs and compare the published HTML with
+the committed output, including the rendered Mermaid diagram. The Week 3
+Spectrum submission URL is **https://jojochaw20.github.io/netlab/week3/**.
+
 ## Credits and modifications
 
 Course material and starter scripts are from Firdaus Sahran's WIC2005
@@ -298,3 +502,9 @@ three-switch/six-host topology, duplicate-address and endpoint validation in
 `check()`, `bad.yaml`, collected evidence, dynamic `links_section()` and
 `mermaid_diagram()`, completed reflection answers, generated page and this
 reproduction guide. See Git history for the recorded progression.
+
+Week 3's `build_routed.py`, `network.yaml`, `make_page3.py` and `page3.yaml`
+originate from the [Week 3 course assignment](https://firdaussahran.github.io/wic2005/weeks/week-03/#assignment--route-your-own-network).
+Week 3 modifications include the four-router ring, summary routes,
+`check_paths()`, negative fixtures, collected evidence, dynamic
+`routing_tables_section()`, reflection answers, navigation and generated page.
