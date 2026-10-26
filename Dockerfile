@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-yaml \
     procps \
+    traceroute \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /lab
