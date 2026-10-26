@@ -1,36 +1,62 @@
-# network.yaml: your routed network, as data. A starting point to change into your own design.
-#
-#   python3 build_routed.py network.yaml      checks it, then builds it in Mininet
-#   python3 make_page3.py network.yaml        checks it, then writes docs/week3/index.html
-#
-# Replace NNNN and every NN (see "Your addresses"). Don't put your full student ID here.
-#
-# Each LAN has one router (.1 on the LAN) and one host (.10).
-# On each link, the first router named is .1 and the second is .2.
-# This starting point is the lab's network without r3. It works, but it doesn't meet the
-# assignment's requirements: that's your job.
+student_id_last4: "5019"
 
-student_id_last4: "NNNN"
-
-routers: [r1, r2]
+routers: [r1, r2, r3, r4]
 
 lans:
-  - name: lan-h1
-    network: 10.NN.1.0/24
+  - name: admin
+    network: 10.19.10.0/24
     router: r1
     host: h1
-  - name: lan-h2
-    network: 10.NN.32.0/24
+
+  - name: students
+    network: 10.19.20.0/24
     router: r2
     host: h2
 
+  - name: servers
+    network: 10.19.40.0/24
+    router: r3
+    host: h3
+
+  - name: monitoring
+    network: 10.19.41.0/24
+    router: r4
+    host: h4
+
+# First router gets .1; second router gets .2.
 links:
-  - [r1, r2, 10.NN.12.0/30]
+  - [r1, r2, 10.19.12.0/30]
+  - [r2, r3, 10.19.23.0/30]
+  - [r3, r4, 10.19.34.0/30]
+  - [r1, r4, 10.19.14.0/30]
 
 routes:
   r1:
-    - to: 10.NN.32.0/24
-      via: 10.NN.12.2
+    - to: 10.19.20.0/24
+      via: 10.19.12.2
+    # Summary covering the server and monitoring LANs.
+    - to: 10.19.40.0/23
+      via: 10.19.14.2
+
   r2:
-    - to: 10.NN.1.0/24
-      via: 10.NN.12.1
+    - to: 10.19.10.0/24
+      via: 10.19.12.1
+    # Same summary, reached through r3.
+    - to: 10.19.40.0/23
+      via: 10.19.23.2
+
+  r3:
+    - to: 10.19.10.0/24
+      via: 10.19.23.1
+    - to: 10.19.20.0/24
+      via: 10.19.23.1
+    - to: 10.19.41.0/24
+      via: 10.19.34.2
+
+  r4:
+    - to: 10.19.10.0/24
+      via: 10.19.14.1
+    - to: 10.19.20.0/24
+      via: 10.19.14.1
+    - to: 10.19.40.0/24
+      via: 10.19.34.1
