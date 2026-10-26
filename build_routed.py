@@ -140,18 +140,57 @@ def check_spec(spec):
 
 
 def check_paths(spec):
-    """TODO (assignment): the same job as check_paths() in routers.py, for any network.
-
-    For every pair of different hosts, follow the packet from the source host's router,
-    using lookup(spec, router, destination) at each router and owner(spec, next_hop) to move
-    on. Report a router with no route, and a loop (a router visited twice on one path).
-    hosts(spec) gives you each host's address and router.
-
-    Start from your check_paths() in routers.py: the logic is the same; only the way you
-    find hosts, routers and next hops changes.
-    """
+    """Check every directed host pair before building the network."""
     problems = []
-    # TODO: your code here
+    host_map = hosts(spec)
+    routers = set(spec["routers"])
+
+    for source, (_, source_router) in host_map.items():
+        for target, (destination, target_router) in host_map.items():
+            if source == target:
+                continue
+
+            router = source_router
+            path = []
+
+            while True:
+                if router in path:
+                    loop = " -> ".join(path + [router])
+                    problems.append(
+                        f"{source} to {target}: loop {loop}"
+                    )
+                    break
+
+                path.append(router)
+                action, next_hop = lookup(spec, router, destination)
+
+                if action == "none":
+                    problems.append(
+                        f"{source} to {target}: "
+                        f"{router} has no route to {destination}"
+                    )
+                    break
+
+                if action == "connected":
+                    if router != target_router:
+                        problems.append(
+                            f"{source} to {target}: "
+                            f"{router} claims a connected destination "
+                            f"that belongs to {target_router}"
+                        )
+                    break
+
+                next_router = owner(spec, next_hop)
+
+                if next_router not in routers:
+                    problems.append(
+                        f"{source} to {target}: next hop {next_hop} "
+                        f"on {router} is not a known router"
+                    )
+                    break
+
+                router = next_router
+
     return problems
 
 
