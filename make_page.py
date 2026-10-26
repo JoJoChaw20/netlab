@@ -14,7 +14,6 @@ GitHub Pages then publishes the docs folder (Settings -> Pages -> main, /docs).
 Course starter adapted for this lab: links_section() and mermaid_diagram()
 generate their output dynamically from the topology. See README.md for credits.
 """
-import datetime
 import html
 import json
 import os
@@ -112,7 +111,7 @@ PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Network {last4}: built from data</title>
+<title>Week 2: My network</title>
 <style>
   body {{ font-family: system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.55; color: #1f2937; }}
   h1 {{ font-size: 1.6rem; margin-bottom: .2rem; }} h2 {{ margin-top: 2.2rem; border-bottom: 1px solid #e5e7eb; }}
@@ -123,8 +122,8 @@ PAGE = """<!doctype html>
 </style>
 </head>
 <body>
-<nav class="meta" aria-label="Lab weeks"><a href="./" aria-current="page">Week 2: built from data</a> · <a href="week3/">Week 3: routed network</a></nav>
-<h1>My network, built from data</h1>
+<nav class="meta" aria-label="Lab weeks"><a href="./" aria-current="page">Week 2: My network</a> · <a href="week3/">Week 3: My routed network</a></nav>
+<h1>My network</h1>
 <p id="summary">{n_switches} switches, {n_hosts} hosts and {n_links} links, on IPv4 <code>{v4_block}</code> and IPv6 <code>{v6_block}</code>.
 The same file builds this network in Mininet and generates this page.</p>
 <p>Repository: <a id="repository" href="{repo}">{repo}</a></p>
@@ -172,9 +171,6 @@ def main():
     with open("docs/index.html", "w") as f:
         f.write(
             PAGE.format(
-                last4=esc(last4),
-                source=esc(source),
-                today=datetime.date.today().isoformat(),
                 n_switches=len(spec["switches"]),
                 n_hosts=len(spec["hosts"]),
                 n_links=len(spec["links"]),

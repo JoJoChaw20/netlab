@@ -11,7 +11,6 @@ docs/week3/index.html with your network, your evidence (evidence3/) and your ans
 
 Routing tables are derived from the same interface plan and static routes.
 """
-import datetime
 import html
 import ipaddress  # for routing_tables_section()
 import json
@@ -123,7 +122,7 @@ PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Network {last4}: routed, from data</title>
+<title>Week 3: My routed network</title>
 <style>
   body {{ font-family: system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.55; color: #1f2937; }}
   h1 {{ font-size: 1.6rem; margin-bottom: .2rem; }} h2 {{ margin-top: 2.2rem; border-bottom: 1px solid #e5e7eb; }}
@@ -134,9 +133,8 @@ PAGE = """<!doctype html>
 </style>
 </head>
 <body>
-<nav class="meta" aria-label="Lab weeks"><a href="../">Week 2: built from data</a> · <a href="./" aria-current="page">Week 3: routed network</a></nav>
-<h1>My routed network, from data</h1>
-<p class="meta">Student ID ending {last4} · generated from <code>{source}</code> by <code>make_page3.py</code> on {today}</p>
+<nav class="meta" aria-label="Lab weeks"><a href="../">Week 2: My network</a> · <a href="./" aria-current="page">Week 3: My routed network</a></nav>
+<h1>My routed network</h1>
 <p id="summary">{n_routers} routers, {n_lans} LANs and {n_links} router links, with {n_routes} static routes, on <code>{v4_block}</code>.
 The static model passed longest-prefix-match path checks for every directed host pair before building.
 These checks do not test every possible runtime failure.</p>
@@ -199,9 +197,6 @@ def main():
     with open("docs/week3/index.html", "w") as f:
         f.write(
             PAGE.format(
-                last4=esc(last4),
-                source=esc(source),
-                today=datetime.date.today().isoformat(),
                 n_routers=len(spec["routers"]),
                 n_lans=len(spec["lans"]),
                 n_links=len(spec["links"]),
