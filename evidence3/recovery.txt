@@ -1,0 +1,8 @@
+PING 10.19.40.10 (10.19.40.10) 56(84) bytes of data.
+64 bytes from 10.19.40.10: icmp_seq=1 ttl=61 time=0.055 ms
+64 bytes from 10.19.40.10: icmp_seq=2 ttl=61 time=0.106 ms
+64 bytes from 10.19.40.10: icmp_seq=3 ttl=61 time=0.140 ms
+
+--- 10.19.40.10 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2016ms
+rtt min/avg/max/mdev = 0.055/0.100/0.140/0.034 ms
